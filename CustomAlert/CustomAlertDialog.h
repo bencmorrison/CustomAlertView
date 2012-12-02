@@ -35,8 +35,8 @@
 @property (nonatomic, copy) NSString *cancelButtonTitleString;
 @property (nonatomic) NSMutableArray *otherButtonTitleStrings;
 
-@property (nonatomic, setter = setBackgroundColor:) UIColor *backgroundColor;
-@property (nonatomic, setter = setBorderColor:) UIColor *borderColor;
+@property (nonatomic, setter = setAlertBackgroundColor:) UIColor *alertBackgroundColor;
+@property (nonatomic, setter = setAlertBorderColor:) UIColor *alertBorderColor;
 @property (nonatomic, setter = setCancelButtonColor:) UIColor *cancelButtonColor;
 @property (nonatomic, setter = setOtherButtonsColor:) UIColor *otherButtonsColor;
 @property (nonatomic, setter = setTextColor:) UIColor *textColor;
@@ -58,20 +58,20 @@
 @optional
 
 // Called when a button is clicked. The view will be automatically dismissed after this call returns
-- (void)customAlertDialog:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex;
+- (void)customAlertDialog:(CustomAlertDialog *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex;
 
 // Called when we cancel a view (eg. the user clicks the Home button). This is not called when the user clicks the cancel button.
 // If not defined in the delegate, we simulate a click in the cancel button
-- (void)customAlertDialogCancel:(UIAlertView *)alertView;
+- (void)customAlertDialogCancel:(CustomAlertDialog *)alertView;
 
-- (void)willPresentCustomAlertDialog:(UIAlertView *)alertView;  // before animation and showing view
-- (void)didPresentCustomAlertDialog:(UIAlertView *)alertView;  // after animation
+- (void)willPresentCustomAlertDialog:(CustomAlertDialog *)alertView;  // before animation and showing view
+- (void)didPresentCustomAlertDialog:(CustomAlertDialog *)alertView;  // after animation
 
-- (void)customAlertDialog:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex; // before animation and hiding view
-- (void)customAlertDialog:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex;  // after animation
+- (void)customAlertDialog:(CustomAlertDialog *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex; // before animation and hiding view
+- (void)customAlertDialog:(CustomAlertDialog *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex;  // after animation
 
 // Called after edits in any of the default fields added by the style
-- (BOOL)customAlertDialogShouldEnableFirstOtherButton:(UIAlertView *)alertView;
+- (BOOL)customAlertDialogShouldEnableFirstOtherButton:(CustomAlertDialog *)alertView;
 
 @end
 

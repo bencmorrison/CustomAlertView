@@ -23,7 +23,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
 
 @implementation CustomAlertDialog
 @synthesize DelegateClass, messageTitle, dialogMessage, cancelButtonTitleString, otherButtonTitleStrings;
-@synthesize borderColor, backgroundColor, cancelButtonColor, otherButtonsColor, textColor;
+@synthesize alertBorderColor, alertBackgroundColor, cancelButtonColor, otherButtonsColor, textColor;
 
 -(id)initWithTitle:(NSString *) titleMessage message:(NSString *) message delegate:(id) delegate cancelButtonTitle:(NSString *) cancelButtonTitle otherButtonTitles:(NSString *) otherButtonTitles, ... {
     
@@ -32,6 +32,9 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     
     cancelButtonColor = [UIColor redColor];
     otherButtonsColor = [UIColor orangeColor];
+    alertBorderColor = [UIColor blueColor];
+    textColor = [UIColor whiteColor];
+    alertBackgroundColor = [UIColor grayColor];
     
     CGRect appBounds = [[UIScreen mainScreen] bounds];
     
@@ -59,25 +62,42 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     }
     
     va_end(nameArgs);
-    TOTALNUMBEROFBUTTONS = 3;
     
     buttonList = [[NSMutableArray alloc] initWithCapacity:1];
     
-    self.backgroundColor = [UIColor clearColor];
-    [self finalizeBackground];
     [self prepAlertBoxWithFrame:appBounds];
+    
+    self.backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.5f];
     
     return self;
     
 }
 
-
--(void) show {    
+-(void) show {
+    
+    if ([DelegateClass respondsToSelector:@selector(willPresentCustomAlertDialog:)]) {
+        [DelegateClass willPresentCustomAlertDialog:self];
+    }
+    
     [[[[[[UIApplication sharedApplication] delegate] window] subviews] lastObject] addSubview:self];
+    
+    if ([DelegateClass respondsToSelector:@selector(didPresentCustomAlertDialog:)]) {
+        [DelegateClass didPresentCustomAlertDialog:self];
+    }
 }
 
--(void) finalizeBackground {
-    self.backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.5f];
+-(void) hideFromButtonPress:(NSInteger) _index {
+    if ([DelegateClass respondsToSelector:@selector(customAlertDialog:willDismissWithButtonIndex:)]) {
+        [DelegateClass customAlertDialog:self willDismissWithButtonIndex:_index];
+    }
+    
+    [self setAlpha:0.0f];
+    
+    if ([DelegateClass respondsToSelector:@selector(customAlertDialog:didDismissWithButtonIndex:)]) {
+        [DelegateClass customAlertDialog:self didDismissWithButtonIndex:_index];
+    }
+    
+    [self removeFromSuperview];
 }
 
 
@@ -106,7 +126,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     
     
     buttonView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, 200, 100)];
-    buttonView.backgroundColor = [UIColor greenColor];
+    buttonView.backgroundColor = [UIColor clearColor];
     
     [alertView addSubview:messageView];
     [alertView addSubview:titleView];
@@ -125,15 +145,15 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     CGFloat labelWidth = widthOfTitleLabel - DOUBLEBORDERWIDTH;
     
     titleView = [[UIView alloc] initWithFrame:CGRectMake(xPos, 0, widthOfTitleLabel, labelHeight + DOUBLEBORDERWIDTH)];
-    titleView.backgroundColor = [UIColor grayColor];
+    titleView.backgroundColor = alertBackgroundColor;
     titleView.layer.borderWidth = BORDERWIDTH;
-    titleView.layer.borderColor = [UIColor blueColor].CGColor;
+    titleView.layer.borderColor = alertBorderColor.CGColor;
     
     titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(BORDERWIDTH, BORDERWIDTH, labelWidth, labelHeight)];
     titleLabel.backgroundColor = [UIColor clearColor];
     
     [titleLabel setText:messageTitle];
-    [titleLabel setTextColor:[UIColor whiteColor]];
+    [titleLabel setTextColor:textColor];
     [titleLabel setFont:[UIFont boldSystemFontOfSize:fontSize]];
     [titleLabel setTextAlignment:NSTextAlignmentCenter];
     
@@ -152,16 +172,16 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     CGFloat buttonBoxHeight = [self buttonViewHeight];
     
     messageView = [[UIView alloc] initWithFrame:CGRectMake(0, yPos, _maxWidth, messageViewHeight)];
-    messageView.backgroundColor = [UIColor grayColor];
+    messageView.backgroundColor = alertBackgroundColor;
     messageView.layer.borderWidth = BORDERWIDTH;
-    messageView.layer.borderColor = [UIColor blueColor].CGColor;
+    messageView.layer.borderColor = alertBorderColor.CGColor;
     
     
     messageText = [[UITextView alloc] initWithFrame:CGRectMake(BORDERWIDTH, yPos + BORDERWIDTH, _maxWidth - DOUBLEBORDERWIDTH, messageViewHeight - yPos - DOUBLEBORDERWIDTH - buttonBoxHeight)];
     
     [messageText setEditable:NO];
     [messageText setBackgroundColor:[UIColor clearColor]];
-    [messageText setTextColor:[UIColor whiteColor]];
+    [messageText setTextColor:textColor];
     
     [messageText setText:dialogMessage];
     
@@ -182,7 +202,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     buttonView.pagingEnabled = YES;
     
     
-    [buttonView setBackgroundColor:[UIColor colorWithRed:0.0f green:1.0f blue:0.5f alpha:0.5f]];//[UIColor yellowColor]];
+    [buttonView setBackgroundColor:[UIColor colorWithRed:0.0f green:1.0f blue:0.5f alpha:0.5f]];//[UIColor clearColor]];
     
     CGPoint topButtonOrgin = CGPointMake(titleViewFrame.origin.x - BORDERWIDTH, 5);
     CGPoint bottomButtonOrgin = CGPointMake(titleViewFrame.origin.x - BORDERWIDTH, buttonHeight + 10);
@@ -224,6 +244,29 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
         
     } else {
         
+        CGFloat width = titleViewFrame.size.width - 10;
+        
+        CGRect scrollTopButton = CGRectMake(topButtonOrgin.x, topButtonOrgin.y, width, buttonHeight);
+        CGRect scrollBottomButton = CGRectMake(bottomButtonOrgin.x, bottomButtonOrgin.y, width, buttonHeight);
+        
+        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:scrollBottomButton andIsCancelButton:YES];
+        
+        
+        [buttonView addSubview:cancelButton];
+        
+        for (int i = 0; i < [otherButtonTitleStrings count]; ++i) {
+            UIButton *btn = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:i]
+                                              withFrame:(i % 2 == 0) ? scrollTopButton : scrollBottomButton
+                                      andIsCancelButton:NO];
+            
+            [buttonView addSubview:btn];
+            
+            if ( i % 2 == 1) {
+                scrollTopButton = CGRectMake(scrollTopButton.origin.x + width + 5, scrollTopButton.origin.y, width, buttonHeight);
+            } else {
+                scrollBottomButton = CGRectMake(scrollBottomButton.origin.x + width + 5, scrollBottomButton.origin.y, width, buttonHeight);
+            }
+        }
     }
     
     
@@ -249,7 +292,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     
     [button setTitle:_title forState:UIControlStateNormal];
          
-    [button setBackgroundColor:[UIColor grayColor]];
+    [button setBackgroundColor:alertBackgroundColor];
     button.layer.borderWidth = BUTTONBORDERWIDTH;
     
     [button addTarget:self action:@selector(buttonPressed:) forControlEvents:UIControlEventTouchUpInside];
@@ -269,20 +312,28 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     return button;
 }
 
--(NSInteger) buttonPressed:(UIButton *) _sender {
+# pragma mark -
+# pragma mark BUTTON WORK
+
+-(void) buttonPressed:(UIButton *) _sender {
     NSInteger index = [buttonList indexOfObject:_sender];
     
     DLog(@"Button Pressed! at index: %i", index);
     
-    return index;
+    if ([DelegateClass respondsToSelector:@selector(customAlertDialog:clickedButtonAtIndex:)]) {
+        [DelegateClass customAlertDialog:self clickedButtonAtIndex:index];
+    }
+    
+    [self hideFromButtonPress:index];
 }
+
 
 
 # pragma mark -
 # pragma mark COLOR SETTERS
 
--(void) setBackgroundColor:(UIColor *)_backgroundColor {
-    backgroundColor = _backgroundColor;
+-(void) setAlertBackgroundColor:(UIColor *)_backgroundColor {
+    alertBackgroundColor = _backgroundColor;
     
     [titleView setBackgroundColor:_backgroundColor];
     [messageView setBackgroundColor:_backgroundColor];
@@ -293,8 +344,8 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     }
 }
 
--(void) setBorderColor:(UIColor *)_borderColor {
-    borderColor = _borderColor;
+-(void) setAlertBorderColor:(UIColor *)_borderColor {
+    alertBorderColor = _borderColor;
     
     [titleView.layer setBorderColor:_borderColor.CGColor];
     [messageView.layer setBorderColor:_borderColor.CGColor];
