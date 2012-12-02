@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "CustomAlertDialog.h"
 
 @interface ViewController : UIViewController
 

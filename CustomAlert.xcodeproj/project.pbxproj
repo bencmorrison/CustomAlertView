@@ -19,6 +19,7 @@
 		B50939341656E4D20061FAD3 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B50939331656E4D20061FAD3 /* ViewController.m */; };
 		B50939371656E4D20061FAD3 /* ViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = B50939351656E4D20061FAD3 /* ViewController_iPhone.xib */; };
 		B509393A1656E4D20061FAD3 /* ViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = B50939381656E4D20061FAD3 /* ViewController_iPad.xib */; };
+		B50939451656F5380061FAD3 /* CustomAlertDialog.m in Sources */ = {isa = PBXBuildFile; fileRef = B50939441656F5380061FAD3 /* CustomAlertDialog.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +40,8 @@
 		B50939331656E4D20061FAD3 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		B50939361656E4D20061FAD3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPhone.xib; sourceTree = "<group>"; };
 		B50939391656E4D20061FAD3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPad.xib; sourceTree = "<group>"; };
+		B50939431656F5380061FAD3 /* CustomAlertDialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomAlertDialog.h; sourceTree = "<group>"; };
+		B50939441656F5380061FAD3 /* CustomAlertDialog.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CustomAlertDialog.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +92,8 @@
 				B509392A1656E4D20061FAD3 /* AppDelegate.m */,
 				B50939321656E4D20061FAD3 /* ViewController.h */,
 				B50939331656E4D20061FAD3 /* ViewController.m */,
+				B50939431656F5380061FAD3 /* CustomAlertDialog.h */,
+				B50939441656F5380061FAD3 /* CustomAlertDialog.m */,
 				B50939351656E4D20061FAD3 /* ViewController_iPhone.xib */,
 				B50939381656E4D20061FAD3 /* ViewController_iPad.xib */,
 				B50939211656E4D10061FAD3 /* Supporting Files */,
@@ -180,6 +185,7 @@
 				B50939271656E4D10061FAD3 /* main.m in Sources */,
 				B509392B1656E4D20061FAD3 /* AppDelegate.m in Sources */,
 				B50939341656E4D20061FAD3 /* ViewController.m in Sources */,
+				B50939451656F5380061FAD3 /* CustomAlertDialog.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
