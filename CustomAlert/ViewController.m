@@ -13,7 +13,7 @@
 @end
 
 @implementation ViewController
-@synthesize AlertWithOneButton, AlertWithTwoButtons, AlertWithThreeButtons, AlertWithFourButtons, StandardUIAlert;
+@synthesize AlertWithOneButton, AlertWithTwoButtons, AlertWithThreeButtons, AlertWithFourButtons, AlertWithFiveButtons, StandardUIAlert, AlertTitleOnly, AlertMessageOnly;
 
 
 - (void)viewDidLoad
@@ -33,7 +33,7 @@
     
     if (sender == AlertWithFourButtons) {
         CustomAlertDialog *cAlert = [[CustomAlertDialog alloc] initWithTitle:@"Test Title"
-                                                                     message:@"This is a test message"
+                                                                     message:@"This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message"
                                                                     delegate:self
                                                            cancelButtonTitle:@"Cancel"
                                                            otherButtonTitles:@"Button 1", @"Button 2", @"Button 3", nil];
@@ -54,7 +54,7 @@
         [cAlert show];
     } else if (sender == AlertWithTwoButtons) {
         CustomAlertDialog *cAlert = [[CustomAlertDialog alloc] initWithTitle:@"Test Title"
-                                                                     message:@"This is a test message"
+                                                                     message:@"This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message This is a test message "
                                                                     delegate:self
                                                            cancelButtonTitle:@"Cancel"
                                                            otherButtonTitles:@"Button 1", nil];
@@ -65,6 +65,27 @@
                                                         delegate:self
                                                cancelButtonTitle:@"Cancel"
                                                otherButtonTitles:@"Button 1", @"Button 2", @"Button 3", nil];
+        [cAlert show];
+    } else if (sender == AlertTitleOnly) {
+        CustomAlertDialog *cAlert = [[CustomAlertDialog alloc] initWithTitle:@"Test Title"
+                                                                     message:nil
+                                                                    delegate:self
+                                                           cancelButtonTitle:@"Cancel"
+                                                           otherButtonTitles:nil];
+        [cAlert show];
+    } else if (sender == AlertMessageOnly) {
+        CustomAlertDialog *cAlert = [[CustomAlertDialog alloc] initWithTitle:nil
+                                                                     message:@"This is a test message"
+                                                                    delegate:self
+                                                           cancelButtonTitle:@"Cancel"
+                                                           otherButtonTitles:nil];
+        [cAlert show];
+    } else if (AlertWithFiveButtons == sender) {
+        CustomAlertDialog *cAlert = [[CustomAlertDialog alloc] initWithTitle:@"Test Title"
+                                                                     message:@"This is a test message"
+                                                                    delegate:self
+                                                           cancelButtonTitle:@"Cancel"
+                                                           otherButtonTitles:@"Button 1", @"Button 2", @"Button 3", @"Button 4", nil];
         [cAlert show];
     }
     

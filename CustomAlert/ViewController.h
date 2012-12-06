@@ -15,6 +15,9 @@
 @property (nonatomic) IBOutlet UIButton *AlertWithTwoButtons;
 @property (nonatomic) IBOutlet UIButton *AlertWithThreeButtons;
 @property (nonatomic) IBOutlet UIButton *AlertWithFourButtons;
+@property (nonatomic) IBOutlet UIButton *AlertWithFiveButtons;
+@property (nonatomic) IBOutlet UIButton *AlertTitleOnly;
+@property (nonatomic) IBOutlet UIButton *AlertMessageOnly;
 @property (nonatomic) IBOutlet UIButton *StandardUIAlert;
 
 @end

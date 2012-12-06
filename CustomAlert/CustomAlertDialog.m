@@ -15,11 +15,6 @@
 #define DLog(...)
 #endif
 
-typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
-    CustomAlertDialogStyleDefault = 0,
-    CustomAlertDialogStyleLight,
-    CustomAlertDialogStyleDark
-};
 
 @implementation CustomAlertDialog
 @synthesize DelegateClass, messageTitle, dialogMessage, cancelButtonTitleString, otherButtonTitleStrings;
@@ -27,30 +22,38 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
 
 -(id)initWithTitle:(NSString *) titleMessage message:(NSString *) message delegate:(id) delegate cancelButtonTitle:(NSString *) cancelButtonTitle otherButtonTitles:(NSString *) otherButtonTitles, ... {
     
-    BORDERWIDTH = 5.0f;
-    BUTTONBORDERWIDTH = 4.0f;
-    
-    cancelButtonColor = [UIColor redColor];
-    otherButtonsColor = [UIColor orangeColor];
-    alertBorderColor = [UIColor blueColor];
-    textColor = [UIColor whiteColor];
-    alertBackgroundColor = [UIColor grayColor];
-    
     CGRect appBounds = [[UIScreen mainScreen] bounds];
     
     self = [super initWithFrame: appBounds];
-    
     if (self == nil) {
         return self;
     }
     
+    // Constants After Init
+    BORDERWIDTH = 5.0f;
+    DOUBLEBORDERWIDTH = BORDERWIDTH * 2.0f;
+    BUTTONBORDERWIDTH = 4.0f;
+    BUTTONSPACER = 5.0f;
+    DOUBLEBUTTONBORERWIDTH = BUTTONBORDERWIDTH * 2.0f;
+    TOTALNUMBEROFBUTTONS = 1;
+    BUTTONHEIGHT = 44.0f;
+    NOMESSAGEOVERRIDE = (message == nil);
+    NOTITLEGIVEN = (titleMessage == nil);
+    TITLEFONTSIZE = 20.0f;
+    MESSAGEFONTSIZE = 18.0f;
     
+    alertBackgroundColor = [UIColor colorWithRed:0.20 green:0.20f blue:0.20f alpha:1.0f];
+    alertBorderColor = [UIColor colorWithRed:0.68f green:0.15f blue:0.0f alpha:1.0f];
+    cancelButtonColor = [UIColor colorWithRed:1.0f green:0.34f blue:0.0f alpha:1.0f];
+    otherButtonsColor = [UIColor colorWithRed:1.0f green:0.87f blue:0.41f alpha:1.0f];
+    textColor = [UIColor colorWithRed:1.0f green:1.0f blue:0.89f alpha:1.0f];
+    
+    // User Entered Information
     messageTitle = titleMessage;
     dialogMessage = message;
     DelegateClass = delegate;
     
     cancelButtonTitleString = cancelButtonTitle;
-    TOTALNUMBEROFBUTTONS = 1;
     otherButtonTitleStrings = [[NSMutableArray alloc] initWithCapacity:1];
     
     va_list nameArgs;
@@ -63,215 +66,76 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     
     va_end(nameArgs);
     
+    
+    // Build Dialog
     buttonList = [[NSMutableArray alloc] initWithCapacity:1];
     
-    [self prepAlertBoxWithFrame:appBounds];
+    [self calculateFrames:appBounds];
+    [self createContainingFrame];
+    [self createMessageView];
+    if (!NOMESSAGEOVERRIDE && !NOTITLEGIVEN) { [self createTitleView]; }
+    [self createButtonView];
     
     self.backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.5f];
+    
+    INITED = YES;
     
     return self;
     
 }
 
--(void) show {
+
+
+#pragma mark -
+#pragma mark PREP ALERT BOX
+-(void) calculateFrames:(CGRect) _frame {
+    CGFloat height = _frame.size.height * 0.65f;
+    CGFloat width = _frame.size.width * 0.9f;
     
-    if ([DelegateClass respondsToSelector:@selector(willPresentCustomAlertDialog:)]) {
-        [DelegateClass willPresentCustomAlertDialog:self];
+    ContainingFrame.origin.x = 0.0f;
+    ContainingFrame.origin.y = 0.0f;
+    ContainingFrame.size.height = height;
+    ContainingFrame.size.width = width;
+    
+    TitleViewFrame.origin.x = (width - (width * 0.8f)) / 2.0f;
+    TitleViewFrame.origin.y = 0.0f;
+    TitleViewFrame.size.width = (width * 0.8f);
+    
+    CGFloat titleHeight = ([messageTitle sizeWithFont:[UIFont boldSystemFontOfSize:TITLEFONTSIZE] forWidth:TitleViewFrame.size.width lineBreakMode:NSLineBreakByWordWrapping].height + (BORDERWIDTH * 2.0f));
+    
+    TitleViewFrame.size.height = titleHeight;
+    
+    MessageViewFrame.origin.x = 0.0f;
+    MessageViewFrame.origin.y = (TitleViewFrame.size.height - BORDERWIDTH) / 2.0f;
+    MessageViewFrame.size.width = width;
+    
+    CGFloat maxHeight = height - [self buttonViewHeight] - DOUBLEBORDERWIDTH - titleHeight - MessageViewFrame.origin.y;
+    CGFloat minHeight = 30.f;
+    CGFloat messageTextHeight = [dialogMessage sizeWithFont:[UIFont systemFontOfSize:MESSAGEFONTSIZE] constrainedToSize:CGSizeMake(width - BORDERWIDTH, maxHeight) lineBreakMode:NSLineBreakByWordWrapping].height + DOUBLEBORDERWIDTH;
+    
+    if (messageTextHeight < minHeight) {
+        messageTextHeight = minHeight;
+    }
+
+    MessageTextFrame.origin.x = 0.0f;
+    MessageTextFrame.origin.y = MessageViewFrame.origin.y + DOUBLEBORDERWIDTH;
+    MessageTextFrame.size.height = messageTextHeight + BORDERWIDTH;
+    MessageTextFrame.size.width = width - DOUBLEBORDERWIDTH;
+    
+    ButtonViewFrame.origin.x = ((width - TitleViewFrame.size.width) / 2.0f);
+    ButtonViewFrame.origin.y = MessageTextFrame.size.height + MessageTextFrame.origin.y;
+    ButtonViewFrame.size.height = [self buttonViewHeight];
+    ButtonViewFrame.size.width = TitleViewFrame.size.width + BUTTONSPACER;
+    
+    MessageViewFrame.size.height = MessageTextFrame.size.height + ButtonViewFrame.size.height + TitleViewFrame.size.height;
+    
+    if (titleHeight < 30.0f) {
+        MessageViewFrame.size.height = MessageViewFrame.size.height + 20;
     }
     
-    [[[[[[UIApplication sharedApplication] delegate] window] subviews] lastObject] addSubview:self];
-    
-    if ([DelegateClass respondsToSelector:@selector(didPresentCustomAlertDialog:)]) {
-        [DelegateClass didPresentCustomAlertDialog:self];
+    if (dialogMessage == nil) {
+        MessageTextFrame.origin.y = DOUBLEBORDERWIDTH;
     }
-}
-
--(void) hideFromButtonPress:(NSInteger) _index {
-    if ([DelegateClass respondsToSelector:@selector(customAlertDialog:willDismissWithButtonIndex:)]) {
-        [DelegateClass customAlertDialog:self willDismissWithButtonIndex:_index];
-    }
-    
-    [self setAlpha:0.0f];
-    
-    if ([DelegateClass respondsToSelector:@selector(customAlertDialog:didDismissWithButtonIndex:)]) {
-        [DelegateClass customAlertDialog:self didDismissWithButtonIndex:_index];
-    }
-    
-    [self removeFromSuperview];
-}
-
-
--(void) prepAlertBoxWithFrame:(CGRect) frame {
-    
-    CGRect newFrame = frame;
-    
-    CGFloat height = frame.size.height * 0.65f;
-    CGFloat width = frame.size.width * 0.9f;
-    
-    CGFloat heightDifference = frame.size.height - height;
-    CGFloat widthDifference = frame.size.width - width;
-    
-    newFrame.origin.x = widthDifference / 2.0f;
-    newFrame.origin.y = (heightDifference / 2.0f) - 10.0f;
-    newFrame.size.height = height;
-    newFrame.size.width = width;
-    
-    
-    alertView = [[UIView alloc] initWithFrame:newFrame];
-    alertView.backgroundColor = [UIColor clearColor];
-    
-    [self createTitleViewWithMaxWidth: width];
-    
-    [self createMessageViewWithMaxWidth: width andHeight: height];
-    
-    
-    buttonView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, 200, 100)];
-    buttonView.backgroundColor = [UIColor clearColor];
-    
-    [alertView addSubview:messageView];
-    [alertView addSubview:titleView];
-    
-    
-    [self addSubview:alertView];
-}
-
--(void) createTitleViewWithMaxWidth:(CGFloat) _maxWidth {
-    CGFloat widthOfTitleLabel = _maxWidth * 0.8f;
-    CGFloat xPos = (_maxWidth - widthOfTitleLabel) / 2.0f;
-    
-    CGFloat DOUBLEBORDERWIDTH = (BORDERWIDTH * 2);
-    CGFloat fontSize = 20.0f;
-    CGFloat labelHeight = 20.0f;
-    CGFloat labelWidth = widthOfTitleLabel - DOUBLEBORDERWIDTH;
-    
-    titleView = [[UIView alloc] initWithFrame:CGRectMake(xPos, 0, widthOfTitleLabel, labelHeight + DOUBLEBORDERWIDTH)];
-    titleView.backgroundColor = alertBackgroundColor;
-    titleView.layer.borderWidth = BORDERWIDTH;
-    titleView.layer.borderColor = alertBorderColor.CGColor;
-    
-    titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(BORDERWIDTH, BORDERWIDTH, labelWidth, labelHeight)];
-    titleLabel.backgroundColor = [UIColor clearColor];
-    
-    [titleLabel setText:messageTitle];
-    [titleLabel setTextColor:textColor];
-    [titleLabel setFont:[UIFont boldSystemFontOfSize:fontSize]];
-    [titleLabel setTextAlignment:NSTextAlignmentCenter];
-    
-    
-    
-    [titleView addSubview:titleLabel];
-}
-
--(void) createMessageViewWithMaxWidth:(CGFloat) _maxWidth andHeight:(CGFloat) _maxHeight {
-    CGRect titleViewFrame = titleView.frame;
-    CGFloat DOUBLEBORDERWIDTH = (BORDERWIDTH * 2);
-    
-    CGFloat yPos = (titleViewFrame.size.height - BORDERWIDTH) / 2;
-    CGFloat messageViewHeight = _maxHeight - yPos;
-    
-    CGFloat buttonBoxHeight = [self buttonViewHeight];
-    
-    messageView = [[UIView alloc] initWithFrame:CGRectMake(0, yPos, _maxWidth, messageViewHeight)];
-    messageView.backgroundColor = alertBackgroundColor;
-    messageView.layer.borderWidth = BORDERWIDTH;
-    messageView.layer.borderColor = alertBorderColor.CGColor;
-    
-    
-    messageText = [[UITextView alloc] initWithFrame:CGRectMake(BORDERWIDTH, yPos + BORDERWIDTH, _maxWidth - DOUBLEBORDERWIDTH, messageViewHeight - yPos - DOUBLEBORDERWIDTH - buttonBoxHeight)];
-    
-    [messageText setEditable:NO];
-    [messageText setBackgroundColor:[UIColor clearColor]];
-    [messageText setTextColor:textColor];
-    
-    [messageText setText:dialogMessage];
-    
-    [messageView addSubview:messageText];
-    
-    [self createButtonsWithMaxWidth:_maxWidth andMessageBottom:(messageText.frame.size.height + yPos + BORDERWIDTH)];
-}
-
--(void) createButtonsWithMaxWidth:(CGFloat) _maxWidth andMessageBottom:(CGFloat) _messageHeight {
-    CGFloat DOUBLEBORDERWIDTH = (BORDERWIDTH * 2);
-    CGFloat viewHeight = [self buttonViewHeight];
-    CGFloat buttonHeight = 44.0f;
-    
-    CGRect titleViewFrame = titleView.frame;
-    
-    buttonView = [[UIScrollView alloc] initWithFrame:CGRectMake(BORDERWIDTH, _messageHeight, _maxWidth - DOUBLEBORDERWIDTH, viewHeight)];
-    buttonView.delegate = self;
-    buttonView.pagingEnabled = YES;
-    
-    
-    [buttonView setBackgroundColor:[UIColor colorWithRed:0.0f green:1.0f blue:0.5f alpha:0.5f]];//[UIColor clearColor]];
-    
-    CGPoint topButtonOrgin = CGPointMake(titleViewFrame.origin.x - BORDERWIDTH, 5);
-    CGPoint bottomButtonOrgin = CGPointMake(titleViewFrame.origin.x - BORDERWIDTH, buttonHeight + 10);
-    
-    if (TOTALNUMBEROFBUTTONS <= 1) {
-        
-        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:CGRectMake(topButtonOrgin.x, topButtonOrgin.y, titleViewFrame.size.width, buttonHeight) andIsCancelButton:YES];
-        
-        
-        [buttonView addSubview:cancelButton];
-        
-    } else if (TOTALNUMBEROFBUTTONS == 2) {
-        
-        UIButton *otherButton = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:0] withFrame:CGRectMake(topButtonOrgin.x, topButtonOrgin.y, titleViewFrame.size.width, buttonHeight) andIsCancelButton:NO];
-        
-        
-        [buttonView addSubview:otherButton];
-        
-        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:CGRectMake(bottomButtonOrgin.x, bottomButtonOrgin.y, titleViewFrame.size.width, buttonHeight) andIsCancelButton:YES];
-    
-        [buttonView addSubview:cancelButton];
-        
-    } else if (TOTALNUMBEROFBUTTONS == 3) {
-        CGFloat halfWidth = titleViewFrame.size.width / 2;
-        
-        UIButton *otherButton = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:0] withFrame:CGRectMake(topButtonOrgin.x, topButtonOrgin.y, halfWidth - 5, buttonHeight) andIsCancelButton:NO];
-        
-        [buttonView addSubview:otherButton];
-        
-        
-        UIButton *otherButton2 = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:1] withFrame:CGRectMake(topButtonOrgin.x  + halfWidth + 5, topButtonOrgin.y, halfWidth - 5, buttonHeight) andIsCancelButton:NO];
-        
-        [buttonView addSubview:otherButton2];
-        
-        
-        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:CGRectMake(bottomButtonOrgin.x, bottomButtonOrgin.y, titleViewFrame.size.width, buttonHeight) andIsCancelButton:YES];
-        
-        [buttonView addSubview:cancelButton];
-        
-    } else {
-        
-        CGFloat width = titleViewFrame.size.width - 10;
-        
-        CGRect scrollTopButton = CGRectMake(topButtonOrgin.x, topButtonOrgin.y, width, buttonHeight);
-        CGRect scrollBottomButton = CGRectMake(bottomButtonOrgin.x, bottomButtonOrgin.y, width, buttonHeight);
-        
-        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:scrollBottomButton andIsCancelButton:YES];
-        
-        
-        [buttonView addSubview:cancelButton];
-        
-        for (int i = 0; i < [otherButtonTitleStrings count]; ++i) {
-            UIButton *btn = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:i]
-                                              withFrame:(i % 2 == 0) ? scrollTopButton : scrollBottomButton
-                                      andIsCancelButton:NO];
-            
-            [buttonView addSubview:btn];
-            
-            if ( i % 2 == 1) {
-                scrollTopButton = CGRectMake(scrollTopButton.origin.x + width + 5, scrollTopButton.origin.y, width, buttonHeight);
-            } else {
-                scrollBottomButton = CGRectMake(scrollBottomButton.origin.x + width + 5, scrollBottomButton.origin.y, width, buttonHeight);
-            }
-        }
-    }
-    
-    
-    [messageView addSubview:buttonView];
-    
     
 }
 
@@ -282,6 +146,222 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     
     return 54.0f;
 }
+
+
+#pragma mark -
+#pragma mark SHOW AND HIDE ALERT
+
+-(void) show {
+    [[[[[[UIApplication sharedApplication] delegate] window] subviews] lastObject] addSubview:self];
+    
+    if ([DelegateClass respondsToSelector:@selector(willPresentCustomAlertDialog:)]) {
+        DLog(@"Calling willPresentCustomAlertDialog: selector from DelegateClass");
+        [DelegateClass willPresentCustomAlertDialog:self];
+    }
+    
+    
+    CGAffineTransform trans = CGAffineTransformScale(alertView.transform, 0.01, 0.01);
+    alertView.transform = trans;
+    
+    [self addSubview:alertView];
+
+    
+    [UIView animateWithDuration:0.15f
+                          delay:0.0f
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+                         alertView.transform = CGAffineTransformScale(alertView.transform, 100.0, 100.0);
+                     }
+                     completion:^(BOOL finished){
+                        if ([DelegateClass respondsToSelector:@selector(didPresentCustomAlertDialog:)]) {
+                            DLog(@"Calling didPresentCustomAlertDialog: selector from DelegateClass");
+                            [DelegateClass didPresentCustomAlertDialog:self];
+                        }
+                         
+                         [buttonView flashScrollIndicators];
+                    }];
+}
+
+-(void) hideFromButtonPress:(NSInteger) _index {
+    if ([DelegateClass respondsToSelector:@selector(customAlertDialog:willDismissWithButtonIndex:)]) {
+        DLog(@"Calling customAlertDialog:willDismissWithButtonIndex: selector from DelegateClass");
+        [DelegateClass customAlertDialog:self willDismissWithButtonIndex:_index];
+    }
+    
+    [UIView animateWithDuration:0.15f
+                          delay:0.0
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+                         alertView.transform = CGAffineTransformScale(self.transform, 0.01, 0.01);
+                     }
+                     completion:^(BOOL finished) {
+                         [alertView removeFromSuperview];
+                         if ([DelegateClass respondsToSelector:@selector(customAlertDialog:didDismissWithButtonIndex:)]) {
+                             DLog(@"Calling customAlertDialog:didDismissWithButtonIndex: selector from DelegateClass");
+                             [DelegateClass customAlertDialog:self didDismissWithButtonIndex:_index];
+                         }
+                         
+                         [self removeFromSuperview];
+                     }];
+}
+
+
+
+#pragma mark -
+#pragma mark CREATE VIEWS
+-(void) createContainingFrame {
+    alertView = [[UIView alloc] initWithFrame:ContainingFrame];
+    alertView.backgroundColor = [UIColor clearColor];
+    alertView.center = self.center;
+}
+
+-(void) createTitleView {
+    
+    CGFloat labelWidth = TitleViewFrame.size.width - DOUBLEBORDERWIDTH;
+    
+    UIView *containerView = [[UIView alloc] initWithFrame:TitleViewFrame];
+    containerView.backgroundColor = alertBackgroundColor;
+    containerView.layer.borderWidth = BORDERWIDTH;
+    containerView.layer.borderColor = alertBorderColor.CGColor;
+    
+    titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(BORDERWIDTH, BORDERWIDTH + 1.0f, labelWidth, [messageTitle sizeWithFont:[UIFont boldSystemFontOfSize:TITLEFONTSIZE] forWidth:labelWidth lineBreakMode:NSLineBreakByTruncatingTail].height)];
+    titleLabel.backgroundColor = [UIColor clearColor];
+    
+    [titleLabel setText:messageTitle];
+    [titleLabel setTextColor:textColor];
+    [titleLabel setFont:[UIFont boldSystemFontOfSize:TITLEFONTSIZE]];
+    [titleLabel setTextAlignment:NSTextAlignmentCenter];
+    
+    [containerView addSubview:titleLabel];
+    
+    [alertView addSubview:containerView];
+}
+
+-(void) createMessageView {
+    
+    messageView = [[UIView alloc] initWithFrame:MessageViewFrame];
+    messageView.backgroundColor = alertBackgroundColor;
+    messageView.layer.borderWidth = BORDERWIDTH;
+    messageView.layer.borderColor = alertBorderColor.CGColor;
+    messageView.clipsToBounds = YES;
+    
+    
+    messageText = [[UITextView alloc] initWithFrame:MessageTextFrame];
+    
+    [messageText setEditable:NO];
+    [messageText setBackgroundColor:[UIColor clearColor]];
+    [messageText setTextColor:textColor];
+    
+    if (NOMESSAGEOVERRIDE) {
+        [messageText setText:messageTitle];
+        [messageText setFont:[UIFont boldSystemFontOfSize:TITLEFONTSIZE]];
+        [messageText setTextAlignment:NSTextAlignmentCenter];
+    } else {
+        [messageText setText:dialogMessage];
+        [messageText setFont:[UIFont systemFontOfSize:MESSAGEFONTSIZE]];
+        [messageText setTextAlignment:NSTextAlignmentCenter];
+    }
+    
+    [messageView addSubview:messageText];
+    
+    [alertView addSubview:messageView];
+}
+
+-(void) createButtonView {
+   
+    
+    buttonView = [[UIScrollView alloc] initWithFrame:ButtonViewFrame];
+    buttonView.delegate = self;
+    buttonView.scrollEnabled = YES;
+    buttonView.bounces = NO;
+    buttonView.scrollEnabled = YES;
+    buttonView.minimumZoomScale = 1.0f;
+    buttonView.maximumZoomScale = 1.0f;
+    buttonView.pagingEnabled = YES;
+    buttonView.clipsToBounds = NO;
+    buttonView.showsHorizontalScrollIndicator = NO;
+    buttonView.showsVerticalScrollIndicator = NO;
+    buttonView.backgroundColor = [UIColor clearColor];
+    
+    CGPoint topButtonOrgin = CGPointMake(0, 5);
+    CGPoint bottomButtonOrgin = CGPointMake(0, BUTTONHEIGHT + 10);
+    
+    if (TOTALNUMBEROFBUTTONS <= 1) {
+        
+        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:CGRectMake(topButtonOrgin.x, topButtonOrgin.y, TitleViewFrame.size.width, BUTTONHEIGHT) andIsCancelButton:YES];
+        
+        
+        [buttonView addSubview:cancelButton];
+        
+    } else if (TOTALNUMBEROFBUTTONS == 2) {
+        
+        UIButton *otherButton = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:0] withFrame:CGRectMake(topButtonOrgin.x, topButtonOrgin.y, TitleViewFrame.size.width, BUTTONHEIGHT) andIsCancelButton:NO];
+        
+        
+        [buttonView addSubview:otherButton];
+        
+        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:CGRectMake(bottomButtonOrgin.x, bottomButtonOrgin.y, TitleViewFrame.size.width, BUTTONHEIGHT) andIsCancelButton:YES];
+    
+        [buttonView addSubview:cancelButton];
+        
+    } else if (TOTALNUMBEROFBUTTONS == 3) {
+        CGFloat halfWidth = TitleViewFrame.size.width / 2;
+        
+        UIButton *otherButton = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:0] withFrame:CGRectMake(topButtonOrgin.x, topButtonOrgin.y, halfWidth - 5, BUTTONHEIGHT) andIsCancelButton:NO];
+        
+        [buttonView addSubview:otherButton];
+        
+        
+        UIButton *otherButton2 = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:1] withFrame:CGRectMake(topButtonOrgin.x  + halfWidth + 5, topButtonOrgin.y, halfWidth - 5, BUTTONHEIGHT) andIsCancelButton:NO];
+        
+        [buttonView addSubview:otherButton2];
+        
+        
+        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:CGRectMake(bottomButtonOrgin.x, bottomButtonOrgin.y, TitleViewFrame.size.width, BUTTONHEIGHT) andIsCancelButton:YES];
+        
+        [buttonView addSubview:cancelButton];
+        
+    } else {
+        
+        CGFloat width = ButtonViewFrame.size.width - BUTTONSPACER;
+        
+        CGRect scrollTopButton = CGRectMake(topButtonOrgin.x, topButtonOrgin.y, width, BUTTONHEIGHT);
+        CGRect scrollBottomButton = CGRectMake(bottomButtonOrgin.x, bottomButtonOrgin.y, width, BUTTONHEIGHT);
+        
+        UIButton *cancelButton = [self createButtonWithTitle:cancelButtonTitleString withFrame:scrollBottomButton andIsCancelButton:YES];
+        
+        [buttonView addSubview:cancelButton];
+        
+        for (int i = 0; i < [otherButtonTitleStrings count]; ++i) {
+            CGRect btnFrame = (i % 2 == 0) ? scrollTopButton : scrollBottomButton;
+            
+            if (i == ([otherButtonTitleStrings count] - 1) && i % 2 == 1) {
+                // We want the button to be on top...
+                btnFrame = scrollTopButton = CGRectMake(scrollTopButton.origin.x + width + 5, scrollTopButton.origin.y, width, BUTTONHEIGHT);
+            }
+            
+            UIButton *btn = [self createButtonWithTitle:[otherButtonTitleStrings objectAtIndex:i]
+                                              withFrame:btnFrame
+                                      andIsCancelButton:NO];
+            
+            [buttonView addSubview:btn];
+            
+            if ( i % 2 == 1) {
+                scrollTopButton = CGRectMake(scrollTopButton.origin.x + width + 5, scrollTopButton.origin.y, width, BUTTONHEIGHT);
+            } else {
+                scrollBottomButton = CGRectMake(scrollBottomButton.origin.x + width + 5, scrollBottomButton.origin.y, width, BUTTONHEIGHT);
+            }
+        }
+        
+        int totalColumns = (TOTALNUMBEROFBUTTONS % 2 == 0) ? (TOTALNUMBEROFBUTTONS / 2.0f) : ((TOTALNUMBEROFBUTTONS + 1) / 2.0f);
+        CGFloat contentWidth = (width + 5.0f) * totalColumns;
+        buttonView.contentSize = CGSizeMake(contentWidth, (BUTTONHEIGHT * 2.0));
+    }
+    
+    
+    [messageView addSubview:buttonView];
+}
+
 
 #pragma mark -
 #pragma mark BUTTON STUFF
@@ -307,8 +387,6 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
         [buttonList addObject:button];
     }
     
-    
-    
     return button;
 }
 
@@ -318,9 +396,10 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
 -(void) buttonPressed:(UIButton *) _sender {
     NSInteger index = [buttonList indexOfObject:_sender];
     
-    DLog(@"Button Pressed! at index: %i", index);
+    DLog(@"Button Pressed at index: %i", index);
     
     if ([DelegateClass respondsToSelector:@selector(customAlertDialog:clickedButtonAtIndex:)]) {
+        DLog(@"Calling customAlertDialog:clickedButtonAtIndex: selector from DelegateClass");
         [DelegateClass customAlertDialog:self clickedButtonAtIndex:index];
     }
     
@@ -333,6 +412,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
 # pragma mark COLOR SETTERS
 
 -(void) setAlertBackgroundColor:(UIColor *)_backgroundColor {
+    DLog(@"Setting CustomAlertView's background color.");
     alertBackgroundColor = _backgroundColor;
     
     [titleView setBackgroundColor:_backgroundColor];
@@ -345,6 +425,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
 }
 
 -(void) setAlertBorderColor:(UIColor *)_borderColor {
+    DLog(@"Setting CustomAlertView's border color.");
     alertBorderColor = _borderColor;
     
     [titleView.layer setBorderColor:_borderColor.CGColor];
@@ -352,6 +433,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
 }
 
 -(void) setCancelButtonColor:(UIColor *)_cancelButtonColor {
+    DLog(@"Setting Cancel button's color (border color)");
     cancelButtonColor = _cancelButtonColor;
     
     if ([buttonList count] > 0) {
@@ -361,6 +443,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
 }
 
 -(void) setOtherButtonsColor:(UIColor *)_otherButtonsColor {
+    DLog(@"Setting other button's color (border color)");
     otherButtonsColor = _otherButtonsColor;
     
     for (int i = 1; i < [buttonList count]; ++i) {
@@ -370,6 +453,7 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
 }
 
 -(void) setTextColor:(UIColor *)_textColor {
+    DLog(@"Setting All text color.");
     textColor = _textColor;
     
     [messageText setTextColor:_textColor];
@@ -381,9 +465,5 @@ typedef NS_ENUM(NSInteger, CustomAlertDialogStyle) {
     }
 }
 
-
-
-#pragma mark -
-#pragma mark EXTRAS
 
 @end
