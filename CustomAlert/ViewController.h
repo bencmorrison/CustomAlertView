@@ -7,9 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "CustomAlertDialog.h"
+#import "CustomAlertView.h"
 
-@interface ViewController : UIViewController <CustomAlertDialogDelgate>
+@interface ViewController : UIViewController <CustomAlertViewDelgate>
 
 @property (nonatomic) IBOutlet UIButton *AlertWithOneButton;
 @property (nonatomic) IBOutlet UIButton *AlertWithTwoButtons;
